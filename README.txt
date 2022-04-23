@@ -3,6 +3,9 @@ CIS 120 Game Project README
 PennKey: _______
 =:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
 
+// account for if player moves piece out of bounds
+// timer
+
 ===================
 =: Core Concepts :=
 ===================

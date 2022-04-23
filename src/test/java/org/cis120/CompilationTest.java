@@ -1,12 +1,15 @@
 package org.cis120;
 
-import org.junit.jupiter.api.*;
-import static org.junit.jupiter.api.Assertions.*;
-import java.lang.reflect.*;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This code makes sure that your Game class has a
- * {@code public static void main(String[] args)} method.
+ * {@code public static void mainCb(String[] args)} method.
  * Compilation will fail if your Game requires additional libraries - feel free
  * to follow up on Piazza or via email if this is the case.
  */

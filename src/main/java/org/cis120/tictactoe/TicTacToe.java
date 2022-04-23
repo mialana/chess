@@ -20,7 +20,7 @@ package org.cis120.tictactoe;
  * the whole game from start to finish without ever drawing anything
  * on a screen or instantiating a Java Swing object.
  * 
- * Run this file to see the main method play a game of TicTacToe,
+ * Run this file to see the mainCb method play a game of TicTacToe,
  * visualized with Strings printed to the console.
  */
 public class TicTacToe {
@@ -150,7 +150,7 @@ public class TicTacToe {
     }
 
     /**
-     * This main method illustrates how the model is completely independent of
+     * This mainCb method illustrates how the model is completely independent of
      * the view and controller. We can play the game from start to finish
      * without ever creating a Java Swing object.
      *
