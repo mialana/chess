@@ -5,90 +5,74 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Chess extends JPanel {
     public ChessBoard mainCb;
     public static int cellSize = 75;
-    private Piece curr = null;
-
-    public Chess() {
-        this.mainCb = ChessBoard.newGameBoard();
-    }
+    private Piece clicked = null;
 
     public Chess(String filePath) {
-        BufferedReader br = null;
-        List<String> pieceLines = new ArrayList<>();
-        List<List<String>> pieceSplit = new ArrayList<>();
+        // splits filePath into individual words.
+        BufferedReader br;
+        List<String> fileLines = new ArrayList<>();
+        List<List<String>> fileWords = new ArrayList<>();
         try {
             br = new BufferedReader(new FileReader(filePath));
             String next = br.readLine();
             while (next != null) {
-                pieceLines.add(next);
+                fileLines.add(next);
                 next = br.readLine();
             }
             br.close();
         } catch (Exception e) {
-            throw new IllegalArgumentException();
+            System.out.println("error in finding/reading file");
         }
-        for (String line : pieceLines) {
-            List<String> splitString = new ArrayList<>();
-            for (String s : line.split(",")) {
-                splitString.add(s);
-            }
-            pieceSplit.add(splitString);
+        for (String line : fileLines) {
+            List<String> splitLine = new ArrayList<>();
+            Collections.addAll(splitLine, line.split(","));
+            fileWords.add(splitLine);
         }
-        Iterator<List<String>> iter = pieceSplit.iterator();
 
-        Map<String, Color> colorMap = Map.of("BLACK", Color.BLACK, "WHITE", Color.WHITE);
-        ChessBoard cb = new ChessBoard(colorMap.get(iter.next().get(0)));
+        Iterator<List<String>> wordIter = fileWords.iterator();
+
+        // initializes chessboard with designated starter color.
+        Map<String, Color> colorMap = Map.of("WHITE", Color.WHITE, "BLACK", Color.BLACK);
+        ChessBoard cb = new ChessBoard(colorMap.get(wordIter.next().get(0)));
         this.mainCb = cb;
-        while (iter.hasNext()) {
-            List<String> list = iter.next();
+
+        while (wordIter.hasNext()) {
+            List<String> wordsList = wordIter.next();
             try {
-                if (list.size() == 5) {
-                    cb.addPiece(
-                            (Piece) Class.forName(list.get(0)).getConstructor(
+                if (wordsList.size() == 5) {
+                    // finds constructor for class listed in col one of line (either pawn or rook)
+                    // and makes new instance of that class.
+                    // second column row, third column col, fourth column owner,
+                    // fifth col passant/firstMove
+                    // adds created instance to desired list
+                    cb.addPieceToList(
+                            (Piece) Class.forName(wordsList.get(0)).getConstructor(
                                     int.class, int.class, Color.class, boolean.class,
                                     ChessBoard.class
                             ).newInstance(
-                                    Integer.parseInt(list.get(1)), Integer.parseInt(list.get(2)),
-                                    colorMap.get(list.get(3)), Boolean.parseBoolean(list.get(4)), cb
+                                    Integer.parseInt(wordsList.get(1)), Integer.parseInt(wordsList.get(2)),
+                                    colorMap.get(wordsList.get(3)), Boolean.parseBoolean(wordsList.get(4)), cb
                             )
                     );
                 } else {
-                    cb.addPiece(
-                            (Piece) Class.forName(list.get(0)).getConstructor(
+                    // same logic except non-pawn and non-rook
+                    cb.addPieceToList(
+                            (Piece) Class.forName(wordsList.get(0)).getConstructor(
                                     int.class, int.class, Color.class, ChessBoard.class
                             ).newInstance(
-                                    Integer.parseInt(list.get(1)), Integer.parseInt(list.get(2)),
-                                    colorMap.get(list.get(3)), cb
+                                    Integer.parseInt(wordsList.get(1)), Integer.parseInt(wordsList.get(2)),
+                                    colorMap.get(wordsList.get(3)), cb
                             )
                     );
                 }
             } catch (Exception e) {
-                System.out.println(e + "failed adding piece from csv");
-            }
-        }
-    }
-
-    public void setClickedPiece(Piece p) {
-        this.curr = p;
-    }
-
-    public void paintBackground(Graphics2D g2) {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                Rectangle2D rec = new Rectangle(i * cellSize, j * cellSize, cellSize, cellSize);
-                if ((i + j) % 2 == 0) {
-                    g2.setColor(Color.WHITE);
-                } else {
-                    g2.setColor(Color.gray);
-                }
-                g2.fill(rec);
+                System.out.println("failed adding piece specified from line.");
             }
         }
     }
@@ -98,96 +82,8 @@ public class Chess extends JPanel {
         return new Dimension(cellSize * 8, cellSize * 8);
     }
 
-    public void paintPieces(ChessBoard cb, Graphics2D g2) {
-        for (Piece p : cb.whiteList) {
-            p.draw(g2, cellSize);
-        }
-        for (Piece p : cb.whiteList) {
-            p.draw(g2, cellSize);
-        }
-
-    }
-
-    public void paintLegalMoves(Graphics2D g2) {
-        if (curr == null) {
-            return;
-        } else if (curr.color != mainCb.whoseTurn) {
-            return;
-        }
-        Color transparentBlue = new Color(0, 0, 255, 100);
-        g2.setColor(transparentBlue);
-        for (int row = 0; row < 8; row++) {
-            for (int column = 0; column < 8; column++) {
-                if (curr.legalMove(row, column)) {
-                    g2.fillRect(column * cellSize, row * cellSize, cellSize, cellSize);
-                    System.out.println(row + " " + column);
-                }
-            }
-        }
-    }
-
-    public void paintCheck(Graphics2D g2) {
-        for (Piece p : mainCb.blackList) {
-            if (p instanceof King) {
-                if (((King) p).isCheck()) {
-                    g2.setColor(new Color(255, 0, 0, 100));
-                    g2.fillRect(p.column * cellSize, p.row * cellSize, cellSize, cellSize);
-                }
-            }
-        }
-        for (Piece p : mainCb.whiteList) {
-            if (p instanceof King) {
-                if (((King) p).isCheck()) {
-                    g2.setColor(new Color(255, 0, 0, 100));
-                    g2.fillRect(p.column * cellSize, p.row * cellSize, cellSize, cellSize);
-                }
-            }
-        }
-    }
-
-    public void paintStaleCheckmate(Graphics g2) {
-        for (Piece p : mainCb.blackList) {
-            if (p instanceof King) {
-                if (((King) p).isStaleCheckmate()) {
-                    g2.setFont(new Font("", Font.BOLD, cellSize));
-                    g2.setColor(Color.RED);
-                    if (((King) p).isCheck()) {
-                        g2.drawString("CHECKMATE!", 0, 3 * cellSize);
-                        g2.drawString("WHITE WINS!", 0, 5 * cellSize);
-                    } else {
-                        g2.drawString("STALEMATE!", 0, 5 * cellSize);
-                    }
-                }
-            }
-        }
-        for (Piece p : mainCb.whiteList) {
-            if (p instanceof King) {
-                if (((King) p).isStaleCheckmate()) {
-                    g2.setFont(new Font("", Font.BOLD, cellSize));
-                    g2.setColor(Color.RED);
-                    if (((King) p).isCheck()) {
-                        g2.drawString("CHECKMATE!", 0, 3 * cellSize);
-                        g2.drawString("BLACK WINS!", 0, 5 * cellSize);
-                    } else {
-                        g2.drawString("STALEMATE!", 0, 5 * cellSize);
-                    }
-                }
-            }
-        }
-    }
-
-    public void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setFont(new Font("", Font.BOLD, Chess.cellSize / 5));
-        paintBackground(g2);
-        paintPieces(mainCb, g2);
-        paintLegalMoves(g2);
-        paintCheck(g2);
-        paintStaleCheckmate(g2);
-        g2.setColor(new Color(0, 255, 0, 100));
-        if (curr != null) {
-            g2.fillRect(curr.column * cellSize, curr.row * cellSize, cellSize, cellSize);
-        }
+    public void setClicked(Piece clicked) {
+        this.clicked = clicked;
     }
 
     public void saveGame(String filePath) {
@@ -203,14 +99,14 @@ public class Chess extends JPanel {
             }
             for (Piece p : mainCb.whiteList) {
                 bw.newLine();
-                bw.write(p.getClass().getName() + "," + p.row + "," + p.column + "," + "WHITE");
+                bw.write(p.getClass().getName() + "," + p.row + "," + p.col + "," + "WHITE");
                 if (p instanceof Pawn || p instanceof King || p instanceof Rook) {
                     bw.write("," + p.firstMove);
                 }
             }
             for (Piece p : mainCb.blackList) {
                 bw.newLine();
-                bw.write(p.getClass().getName() + "," + p.row + "," + p.column + "," + "BLACK");
+                bw.write(p.getClass().getName() + "," + p.row + "," + p.col + "," + "BLACK");
                 if (p instanceof Pawn || p instanceof King || p instanceof Rook) {
                     bw.write("," + p.firstMove);
                 }
@@ -218,6 +114,115 @@ public class Chess extends JPanel {
             bw.close();
         } catch (IOException e1) {
             System.out.println("IOException in writeStringsToFile");
+        }
+    }
+
+    // below are all helper methods for painting
+    private void paintBoard(Graphics2D g2D) {
+        // handles painting each cell appropriate color
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Rectangle2D cell = new Rectangle(i * cellSize, j * cellSize, cellSize, cellSize);
+                if ((i + j) % 2 == 0) {
+                    g2D.setColor(new Color(255, 241, 220));
+                } else {
+                    g2D.setColor(new Color(182, 148, 110));
+                }
+                // handles filling of each cell
+                g2D.fill(cell);
+            }
+        }
+    }
+
+    private List<List<Piece>> makePieceListList() {
+        List<List<Piece>> pieceListList = new LinkedList<List<Piece>>();
+        pieceListList.add(mainCb.blackList);
+        pieceListList.add(mainCb.whiteList);
+        return pieceListList;
+    }
+
+    // calls the draw method for each individual piece
+    private void paintChessPieces(Graphics2D g2D) {
+        List<List<Piece>> pieceListList = makePieceListList();
+        for (List<Piece> pl : pieceListList) {
+            for (Piece p : pl) {
+                p.draw(g2D, cellSize);
+            }
+        }
+    }
+
+    private void paintViableAndLegalMoves(Graphics2D g2D) {
+        // paint all moves that user is allowed to move to next.
+        if (clicked == null) {
+            return;
+        } else if (clicked.color != mainCb.whoseTurn) {
+            return;
+        }
+        // not exactly sure how to use alpha component, please ignore the varying colors of green.
+        g2D.setColor(new Color(110, 182, 146, 125));
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                // isLegalMove checks if isViableMove inside
+                if (clicked.isLegalMove(row, col)) {
+                    // based on orientation of chessboard, column and row has to be switched
+                    Rectangle2D cell = new Rectangle(col * cellSize, row * cellSize, cellSize, cellSize);
+                    g2D.fill(cell);
+                }
+            }
+        }
+    }
+
+    private void paintCheck(Graphics2D g2D) {
+        // makes an updated list of lists with all the pieces.
+        List<List<Piece>> pieceListList = makePieceListList();
+
+        // goes through both piece lists and determines if their kings are in check.
+        // paints king red if piece is now in check
+        for (List<Piece> pl : pieceListList) {
+            for (Piece p : pl) {
+                if (p instanceof King) {
+                    if (((King) p).inCheck()) {
+                        g2D.setColor(new Color(182, 112, 110, 125));
+                        g2D.fillRect(p.col * cellSize, p.row * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+    }
+
+    private void paintGameConclusion(Graphics g2D) {
+        List<List<Piece>> pieceListList = makePieceListList();
+        for (List<Piece> pl : pieceListList) {
+            for (Piece p : pl) {
+                if (p instanceof King) {
+                    if (((King) p).isGameOver()) {
+                        g2D.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD | Font.ITALIC, cellSize / 2));
+                        g2D.setColor(new Color(119, 140, 201));
+                        if (((King) p).inCheck()) {
+                            g2D.drawString("CHECKMATE!", ((5 * cellSize) / 2), 4 * cellSize);
+                        } else {
+                            g2D.drawString("STALEMATE!", (5 / 2) * cellSize, 4 * cellSize);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void paintComponent(Graphics g) {
+        // called in RunChess every time ChessBoardListener is triggered (whenever user clicks
+        // anywhere on board)
+        // also called when new game is loaded or saved game is loaded
+        Graphics2D g2D = (Graphics2D) g;
+        paintBoard(g2D);
+        paintChessPieces(g2D);
+        paintViableAndLegalMoves(g2D);
+        paintCheck(g2D);
+        paintGameConclusion(g2D);
+        // paints the clicked piece
+        if (clicked != null) {
+            g2D.setColor(new Color(255, 255, 255, 125));
+            g2D.fillRect(clicked.col * cellSize, clicked.row * cellSize, cellSize, cellSize);
         }
     }
 }

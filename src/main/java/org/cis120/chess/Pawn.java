@@ -9,70 +9,70 @@ import java.io.IOException;
 public class Pawn extends Piece {
     boolean passant = false;
 
-    public Pawn(int row, int column, Color color, boolean firstMove, ChessBoard board) {
-        super(row, column, color, board);
+    public Pawn(int row, int col, Color color, boolean firstMove, ChessBoard mainBoard) {
+        super(row, col, color, mainBoard);
         this.firstMove = firstMove;
     }
 
     @Override
-    public boolean move(int row, int column) {
-        if (this.legalMove(row, column) && board.whoseTurn == this.color && Math.abs(this.row - row) == 1
+    public boolean movePiece(int row, int col) {
+        if (this.isLegalMove(row, col) && mainBoard.whoseTurn == this.color && Math.abs(this.row - row) == 1
                 &&
-                Math.abs(this.column - column) == 1 && !this.board.hasPiece(row, column)) {
-            this.board.whiteList.remove(this.board.findPiece(this.row, column));
-            this.board.blackList.remove(this.board.findPiece(this.row, column));
+                Math.abs(this.col - col) == 1 && !this.mainBoard.isOccupied(row, col)) {
+            this.mainBoard.whiteList.remove(this.mainBoard.findPiece(this.row, col));
+            this.mainBoard.blackList.remove(this.mainBoard.findPiece(this.row, col));
             this.row = row;
-            this.column = column;
-            if (this.board.whoseTurn == Color.WHITE) {
-                this.board.whoseTurn = Color.BLACK;
+            this.col = col;
+            if (this.mainBoard.whoseTurn == Color.WHITE) {
+                this.mainBoard.whoseTurn = Color.BLACK;
             } else {
-                this.board.whoseTurn = Color.WHITE;
+                this.mainBoard.whoseTurn = Color.WHITE;
             }
-            this.board.update();
+            this.mainBoard.updateBoard();
             return true;
-        } else if (this.legalMove(row, column) && board.whoseTurn == this.color
+        } else if (this.isLegalMove(row, col) && mainBoard.whoseTurn == this.color
                 && Math.abs(this.row - row) == 2) {
             this.passant = true;
-            boolean ret = super.move(row, column);
+            boolean wasMoved = super.movePiece(row, col);
             this.firstMove = false;
-            return ret;
+            return wasMoved;
         } else {
-            boolean moved = super.move(row, column);
-            if (moved) {
+            boolean wasMoved = super.movePiece(row, col);
+            if (wasMoved) {
                 this.firstMove = false;
             }
             if (this.row == 0 || this.row == 7) {
                 RunChess.pawnSwap(this, Chess.cellSize, RunChess.getChess());
             }
-            return moved;
+            return wasMoved;
         }
     }
 
     @Override
-    public void draw(Graphics2D g2, int size) {
+    public void draw(Graphics2D g2D, int size) {
         BufferedImage bimg = null;
         try {
             if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/wpawn.png"));
+                bimg = ImageIO.read(new File("files/pawn_white.png"));
             } else {
-                bimg = ImageIO.read(new File("files/bpawn.png"));
+                bimg = ImageIO.read(new File("files/pawn_black.png"));
             }
             Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2.drawImage(img, size * column, size * row, null);
+            g2D.drawImage(img, size * col, size * row, null);
         } catch (IOException e) {
             System.out.println("Image does not exist");
         }
     }
 
     @Override
-    public boolean moveNormallyLegal(int row, int column) {
-        if (this.column == column && !board.hasPiece(row, column)) // moving piece forward
+    public boolean isViableMove(int row, int col) {
+        if (this.col == col && !mainBoard.isOccupied(row, col)) // moving piece forward
         {
             if (this.color == Color.WHITE) {
                 if (this.row - row == 1) {
                     return true;
                 }
-                if (this.row - row == 2 && !board.hasPiece(this.row - 1, column)
+                if (this.row - row == 2 && !mainBoard.isOccupied(this.row - 1, col)
                         && this.firstMove) {
                     return true;
                 }
@@ -81,13 +81,13 @@ public class Pawn extends Piece {
                 if (this.row - row == -1) {
                     return true;
                 }
-                if (this.row - row == -2 && !board.hasPiece(this.row + 1, column)
+                if (this.row - row == -2 && !mainBoard.isOccupied(this.row + 1, col)
                         && this.firstMove) {
                     return true;
                 }
             }
         }
-        if (Math.abs(this.column - column) == 1 && this.hasEnemyPiece(row, column)) // taking piece
+        if (Math.abs(this.col - col) == 1 && this.hasOpponent(row, col)) // taking piece
                                                                                     // diagonally
         {
             if (this.color == Color.WHITE) {
@@ -101,9 +101,9 @@ public class Pawn extends Piece {
                 }
             }
         }
-        if (Math.abs(this.column - column) == 1 && this.hasEnemyPiece(this.row, column)) // passant
+        if (Math.abs(this.col - col) == 1 && this.hasOpponent(this.row, col)) // passant
         {
-            Piece p = this.board.findPiece(this.row, column);
+            Piece p = this.mainBoard.findPiece(this.row, col);
             if (p instanceof Pawn) {
                 if (((Pawn) p).passant) {
                     if (this.color == Color.WHITE) {
@@ -123,31 +123,17 @@ public class Pawn extends Piece {
     }
 
     @Override
-    public boolean legalMove(int row, int column) {
-        if (this.moveNormallyLegal(row, column)) {
-            int or = this.row;
-            int oc = this.column;
+    public boolean isLegalMove(int row, int col) {
+        if (this.isViableMove(row, col)) {
+            int actualRow = this.row;
+            int actualCol = this.col;
+            
             this.row = row;
-            this.column = column;
-            this.board.update();
-            boolean kingInCheck = false;
-            if (this.color == Color.WHITE) {
-                for (Piece p : this.board.whiteList) {
-                    if (p instanceof King) {
-                        kingInCheck = ((King) p).isCheck();
-                    }
-                }
-            }
-            if (this.color == Color.BLACK) {
-                for (Piece p : this.board.blackList) {
-                    if (p instanceof King) {
-                        kingInCheck = ((King) p).isCheck();
-                    }
-                }
-            }
-            this.row = or;
-            this.column = oc;
-            this.board.update();
+            this.col = col;
+            this.mainBoard.updateBoard();
+            
+            boolean kingInCheck = super.isInCheck(actualRow,actualCol);
+            this.mainBoard.updateBoard();
             return !kingInCheck;
         }
         return false;

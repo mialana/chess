@@ -3,8 +3,7 @@ CIS 120 Game Project README
 PennKey: _______
 =:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
 
-// account for if player moves piece out of bounds
-// timer
+// change piece instance variables to col, owner, and isPassant/passantViable
 
 ===================
 =: Core Concepts :=

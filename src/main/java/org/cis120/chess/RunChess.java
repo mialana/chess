@@ -21,7 +21,7 @@ public class RunChess implements Runnable {
         JButton loadButton = new JButton("LOAD GAME");
         JButton newGameButton = new JButton("NEW GAME");
 
-        String whoseTurn = "";
+        String whoseTurn;
         if (mainChess.mainCb.whoseTurn == Color.WHITE) {
             whoseTurn = "WHITE's TURN";
         } else {
@@ -36,13 +36,12 @@ public class RunChess implements Runnable {
         button_Panel.add(loadButton);
         button_Panel.add(newGameButton);
         button_Panel.add(turn_Label);
-        button_Panel.setBackground(Color.DARK_GRAY);
+        button_Panel.setBackground(new Color(114, 84, 51));
 
         saveButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 mainChess.saveGame("files/savedGame.txt");
-                System.out.println("Game successfully saved");
             }
         });
         loadButton.addMouseListener(new MouseAdapter() {
@@ -50,15 +49,20 @@ public class RunChess implements Runnable {
             public void mouseClicked(MouseEvent e) {
                 mainChess.mainCb = new Chess("files/savedGame.txt").mainCb;
                 mainChess.repaint();
-                System.out.println("Game successfully loaded");
             }
         });
         newGameButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 mainChess.mainCb = new Chess("files/newGame.txt").mainCb;
+                if (mainChess.mainCb.whoseTurn == Color.WHITE) {
+                    turn_Label.setText("WHITE's TURN");
+                } else {
+                    turn_Label.setText("BLACK's TURN");
+                }
+                button_Panel.repaint();
+                mainChess.setClicked(null);
                 mainChess.repaint();
-                System.out.println("New game successfully loaded");
             }
         });
 
@@ -129,96 +133,102 @@ public class RunChess implements Runnable {
     }
 
     // allow pawn to swap with another piece
-    public static void pawnSwap(Pawn p, int size, Chess cg) {
+    public static void pawnSwap(Pawn p, int size, Chess mainChess) {
         JFrame swap_frame = new JFrame();
         swap_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         JPanel swap_panel = new JPanel();
         swap_frame.add(swap_panel);
 
         if (p.color == Color.BLACK) {
-            addSwapLabel(swap_panel, size, "files/bqueen.png");
-            addSwapLabel(swap_panel, size, "files/bknight.png");
-            addSwapLabel(swap_panel, size, "files/bbishop.png");
-            addSwapLabel(swap_panel, size, "files/brook.png");
+            addSwapLabel(swap_panel, size, "files/queen_black.png");
+            addSwapLabel(swap_panel, size, "files/knight_black.png");
+            addSwapLabel(swap_panel, size, "files/bishop_black.png");
+            addSwapLabel(swap_panel, size, "files/rook_black.png");
         } else {
-            addSwapLabel(swap_panel, size, "files/wqueen.png");
-            addSwapLabel(swap_panel, size, "files/wknight.png");
-            addSwapLabel(swap_panel, size, "files/wbishop.png");
-            addSwapLabel(swap_panel, size, "files/wrook.png");
+            addSwapLabel(swap_panel, size, "files/queen_white.png");
+            addSwapLabel(swap_panel, size, "files/knight_white.png");
+            addSwapLabel(swap_panel, size, "files/bishop_white.png");
+            addSwapLabel(swap_panel, size, "files/rook_white.png");
         }
 
-        swap_panel.addMouseListener(new PawnSwapListener(p, swap_frame, cg));
+        swap_panel.addMouseListener(new PawnSwapListener(p, swap_frame, mainChess));
 
         swap_frame.pack();
         swap_frame.setVisible(true);
     }
 
     public static Chess getChess() {
-        return RunChess.mainChess;
+        return mainChess;
     }
 }
 
 // these mouseListener classes are too long to use as anonymous classes
 class ChessBoardListener extends MouseAdapter {
-    private final Chess cg;
-    private final JLabel jl;
-    private final JPanel jp;
+    private final Chess mainChess;
+    private final JLabel turn_Label;
+    private final JPanel button_Panel;
     Piece curr = null;
 
-    public ChessBoardListener(Chess cg, JLabel jl, JPanel jp) {
-        this.cg = cg;
-        this.jl = jl;
-        this.jp = jp;
+    public ChessBoardListener(Chess mainChess, JLabel turn_Label, JPanel button_Panel) {
+        this.mainChess = mainChess;
+        this.turn_Label = turn_Label;
+        this.button_Panel = button_Panel;
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        System.out.println("user clicked on game board");
-        if (cg.mainCb.hasPiece(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize)
+        // for when clicked space is occupied and when first click on that piece
+        if (mainChess.mainCb.isOccupied(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize)
                 && curr == null) {
-            this.curr = cg.mainCb.findPiece(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize);
-            cg.setClickedPiece(curr);
+            this.curr = mainChess.mainCb.findPiece(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize);
+            mainChess.setClicked(curr);
         } else if (curr != null) {
-            curr.move(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize);
-            cg.setClickedPiece(null);
+            // for when second click on a piece
+            curr.movePiece(e.getY() / Chess.cellSize, e.getX() / Chess.cellSize);
+            mainChess.setClicked(null);
             curr = null;
         }
-        cg.repaint();
-        if (cg.mainCb.whoseTurn == Color.WHITE) {
-            jl.setText("WHITE's TURN");
+        mainChess.repaint();
+        // change's label
+        if (mainChess.mainCb.whoseTurn == Color.WHITE) {
+            turn_Label.setText("WHITE's TURN");
         } else {
-            jl.setText("BLACK's TURN");
+            turn_Label.setText("BLACK's TURN");
         }
-        jp.repaint();
+        button_Panel.repaint();
     }
 }
 
 class PawnSwapListener extends MouseAdapter {
-    private final Pawn p;
-    private final Chess cg;
+    private final Pawn swappedPawn;
+    private final Chess mainChess;
     private final JFrame frame;
 
-    public PawnSwapListener(Pawn p, JFrame frame, Chess cg) {
-        this.p = p;
+    public PawnSwapListener(Pawn swappedPawn, JFrame frame, Chess mainChess) {
+        this.swappedPawn = swappedPawn;
         this.frame = frame;
-        this.cg = cg;
+        this.mainChess = mainChess;
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        System.out.println("successfully chose piece to swap");
-        p.board.whiteList.remove(p);
-        p.board.blackList.remove(p);
+        System.out.println("chose piece to swap");
+        swappedPawn.mainBoard.whiteList.remove(swappedPawn);
+        swappedPawn.mainBoard.blackList.remove(swappedPawn);
         if ((e.getX() / Chess.cellSize) == 0) {
-            p.board.addPiece(new Queen(p.row, p.column, p.color, p.board));
+            swappedPawn.mainBoard.addPieceToList(new Queen(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.mainBoard));
         } else if (e.getX() / Chess.cellSize == 1) {
-            p.board.addPiece(new Knight(p.row, p.column, p.color, p.board));
+            swappedPawn.mainBoard.addPieceToList(new Knight(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.mainBoard));
         } else if (e.getX() / Chess.cellSize == 2) {
-            p.board.addPiece(new Bishop(p.row, p.column, p.color, p.board));
+            swappedPawn.mainBoard.addPieceToList(new Bishop(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.mainBoard));
         } else {
-            p.board.addPiece(new Rook(p.row, p.column, p.color, false, p.board));
+            swappedPawn.mainBoard.addPieceToList(new Rook(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, false, swappedPawn.mainBoard));
         }
-        cg.repaint();
+        mainChess.repaint();
         frame.setVisible(false);
     }
 }

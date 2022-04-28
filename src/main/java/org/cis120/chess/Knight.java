@@ -8,32 +8,32 @@ import java.io.IOException;
 
 public class Knight extends Piece {
 
-    public Knight(int row, int column, Color color, ChessBoard board) {
-        super(row, column, color, board);
+    public Knight(int row, int col, Color color, ChessBoard mainBoard) {
+        super(row, col, color, mainBoard);
     }
 
     @Override
-    public void draw(Graphics2D g2, int size) {
+    public void draw(Graphics2D g2D, int size) {
         BufferedImage bimg = null;
         try {
             if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/wknight.png"));
+                bimg = ImageIO.read(new File("files/knight_white.png"));
             } else {
-                bimg = ImageIO.read(new File("files/bknight.png"));
+                bimg = ImageIO.read(new File("files/knight_black.png"));
             }
             Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2.drawImage(img, size * column, size * row, null);
+            g2D.drawImage(img, size * col, size * row, null);
         } catch (IOException e) {
             System.out.println("Image does not exist");
         }
     }
 
     @Override
-    public boolean moveNormallyLegal(int row, int column) {
-        if (this.hasTeamPiece(row, column)) {
+    public boolean isViableMove(int row, int col) {
+        if (this.hasTeammate(row, col)) {
             return false;
         }
-        if (Math.abs((this.row - row) * (this.column - column)) == 2) {
+        if (Math.abs((this.row - row) * (this.col - col)) == 2) {
             return true;
         }
         return false;

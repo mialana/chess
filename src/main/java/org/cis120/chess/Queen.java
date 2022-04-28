@@ -8,28 +8,28 @@ import java.io.IOException;
 
 public class Queen extends Piece {
 
-    public Queen(int row, int column, Color color, ChessBoard board) {
-        super(row, column, color, board);
+    public Queen(int row, int col, Color color, ChessBoard mainBoard) {
+        super(row, col, color, mainBoard);
     }
 
     @Override
-    public boolean moveNormallyLegal(int row, int column) {
-        Bishop b = new Bishop(this.row, this.column, this.color, this.board);
-        Rook r = new Rook(this.row, this.column, this.color, false, this.board);
-        return b.moveNormallyLegal(row, column) || r.moveNormallyLegal(row, column);
+    public boolean isViableMove(int row, int col) {
+        Bishop b = new Bishop(this.row, this.col, this.color, this.mainBoard);
+        Rook r = new Rook(this.row, this.col, this.color, false, this.mainBoard);
+        return b.isViableMove(row, col) || r.isViableMove(row, col);
     }
 
     @Override
-    public void draw(Graphics2D g2, int size) {
+    public void draw(Graphics2D g2D, int size) {
         BufferedImage bimg = null;
         try {
             if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/wqueen.png"));
+                bimg = ImageIO.read(new File("files/queen_white.png"));
             } else {
-                bimg = ImageIO.read(new File("files/bqueen.png"));
+                bimg = ImageIO.read(new File("files/queen_black.png"));
             }
             Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2.drawImage(img, size * column, size * row, null);
+            g2D.drawImage(img, size * col, size * row, null);
         } catch (IOException e) {
             System.out.println("Image does not exist");
         }

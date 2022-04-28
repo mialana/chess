@@ -8,14 +8,14 @@ import java.io.IOException;
 
 public class Rook extends Piece {
 
-    public Rook(int row, int column, Color color, boolean firstMove, ChessBoard board) {
-        super(row, column, color, board);
+    public Rook(int row, int col, Color color, boolean firstMove, ChessBoard mainBoard) {
+        super(row, col, color, mainBoard);
         this.firstMove = firstMove;
     }
 
     @Override
-    public boolean move(int row, int column) {
-        boolean moved = super.move(row, column);
+    public boolean movePiece(int row, int col) {
+        boolean moved = super.movePiece(row, col);
         if (moved) {
             this.firstMove = false;
         }
@@ -23,42 +23,42 @@ public class Rook extends Piece {
     }
 
     @Override
-    public void draw(Graphics2D g2, int size) {
+    public void draw(Graphics2D g2D, int size) {
         BufferedImage bimg = null;
         try {
             if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/wrook.png"));
+                bimg = ImageIO.read(new File("files/rook_white.png"));
             } else {
-                bimg = ImageIO.read(new File("files/brook.png"));
+                bimg = ImageIO.read(new File("files/rook_black.png"));
             }
             Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2.drawImage(img, size * column, size * row, null);
+            g2D.drawImage(img, size * col, size * row, null);
         } catch (IOException e) {
             System.out.println("Image does not exist");
         }
     }
 
     @Override
-    public boolean moveNormallyLegal(int row, int column) {
-        if (this.row == row && this.column == column) {
+    public boolean isViableMove(int row, int col) {
+        if (this.row == row && this.col == col) {
             return false;
         }
         if (this.row == row) {
-            for (int i = Math.min(this.column, column) + 1; i < Math
-                    .max(this.column, column); i++) {
-                if (this.board.hasPiece(row, i)) {
+            for (int i = Math.min(this.col, col) + 1; i < Math
+                    .max(this.col, col); i++) {
+                if (this.mainBoard.isOccupied(row, i)) {
                     return false;
                 }
             }
-            return !this.hasTeamPiece(row, column);
+            return !this.hasTeammate(row, col);
         }
-        if (this.column == column) {
+        if (this.col == col) {
             for (int i = Math.min(this.row, row) + 1; i < Math.max(this.row, row); i++) {
-                if (this.board.hasPiece(i, column)) {
+                if (this.mainBoard.isOccupied(i, col)) {
                     return false;
                 }
             }
-            return !this.hasTeamPiece(row, column);
+            return !this.hasTeammate(row, col);
         }
         return false;
     }

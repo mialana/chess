@@ -1,144 +1,133 @@
 package org.cis120.chess;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.*;
 
 public abstract class Piece {
-    int row;
-    int column;
-    ChessBoard board;
+    ChessBoard mainBoard;
     Color color;
+
+    int row;
+    int col;
+
     boolean firstMove;
 
-    public Piece(int row, int column, Color color, ChessBoard board) {
+    // each piece keeps track of their position, which player they belong to, and their board.
+    public Piece(int row, int col, Color color, ChessBoard mainBoard) {
         this.row = row;
-        this.column = column;
+        this.col = col;
         this.color = color;
-        this.board = board;
+        this.mainBoard = mainBoard;
     }
 
-    public boolean move(int row, int column) {
-        if (this.legalMove(row, column) && board.whoseTurn == this.color) {
-            if (this.board.hasPiece(row, column)) {
-                this.board.whiteList.remove(this.board.findPiece(row, column));
-                this.board.blackList.remove(this.board.findPiece(row, column));
-            }
-            this.row = row;
-            this.column = column;
-            if (this.board.whoseTurn == Color.WHITE) {
-                for (Piece p : this.board.blackList) {
-                    if (p instanceof Pawn) {
-                        ((Pawn) p).passant = false;
-                    }
-                }
-                this.board.whoseTurn = Color.BLACK;
-            } else {
-                for (Piece p : this.board.whiteList) {
-                    if (p instanceof Pawn) {
-                        ((Pawn) p).passant = false;
-                    }
-                }
-                this.board.whoseTurn = Color.WHITE;
-            }
+    public abstract boolean isViableMove(int row, int col);
 
-            this.board.update();
-            return true;
-        }
-        return false;
-    }
-
-    public boolean legalMove(int row, int column) {
-        if (this.moveNormallyLegal(row, column)) {
-            int or = this.row;
-            int oc = this.column;
-            Piece piece = this.board.findPiece(row, column);
-            this.row = row;
-            this.column = column;
-            this.board.whiteList.remove(piece);
-            this.board.blackList.remove(piece);
-            this.board.update();
-            boolean kingInCheck = false;
-            if (this.color == Color.WHITE) {
-                for (Piece p : this.board.whiteList) {
-                    if (p instanceof King) {
-                        kingInCheck = ((King) p).isCheck();
-                    }
-                }
-            }
-            if (this.color == Color.BLACK) {
-                for (Piece p : this.board.blackList) {
-                    if (p instanceof King) {
-                        kingInCheck = ((King) p).isCheck();
-                    }
-                }
-            }
-            this.row = or;
-            this.column = oc;
-            if (piece != null) {
-                this.board.addPiece(piece);
-            }
-            this.board.update();
-            return !kingInCheck;
-        }
-        return false;
-    }
-
-    public abstract boolean moveNormallyLegal(int row, int column);
-
-    public abstract void draw(Graphics2D g2, int size);
+    public abstract void draw(Graphics2D g2D, int size);
 
     public Color getColor() {
         return this.color;
     }
 
-    public boolean spaceInCheck(int row, int column) {
-        List<Piece> enemyPieces = new ArrayList<>();
-        if (this.color == Color.WHITE) {
-            enemyPieces = this.board.blackList;
-        } else {
-            enemyPieces = this.board.whiteList;
+    public boolean hasOpponent(int row, int col) {
+        if (!this.mainBoard.isOccupied(row, col)) {
+            return false;
         }
-        for (Piece ep : enemyPieces) {
-            if (ep.moveNormallyLegal(row, column)) {
-                return true;
+        return this.mainBoard.findPiece(row, col).getColor() != this.color;
+    }
+
+    public boolean hasTeammate(int row, int col) {
+        if (!this.mainBoard.isOccupied(row, col)) {
+            return false;
+        }
+        return this.mainBoard.findPiece(row, col).getColor() == this.color;
+    }
+
+    // this method actually performs the move
+    public boolean movePiece(int row, int col) {
+        // if the clicked cell is legal (and viable) and it's that person's turn.
+        if (this.isLegalMove(row, col) && mainBoard.whoseTurn == this.color) {
+            // handles "eating" of enemy's piece.
+            if (this.mainBoard.isOccupied(row, col)) {
+                this.mainBoard.whiteList.remove(this.mainBoard.findPiece(row, col));
+                this.mainBoard.blackList.remove(this.mainBoard.findPiece(row, col));
             }
-            boolean ret;
-            if (ep.color == Color.WHITE) {
-                ep.color = Color.BLACK;
-                ret = ep.moveNormallyLegal(row, column);
-                ep.color = Color.WHITE;
+            // change's piece's position to new position
+            this.row = row;
+            this.col = col;
+            // ADD COMMENT LATER
+            if (this.mainBoard.whoseTurn == Color.WHITE) {
+                for (Piece p : this.mainBoard.blackList) {
+                    if (p instanceof Pawn) {
+                        ((Pawn) p).passant = false;
+                    }
+                }
+                // change turns
+                this.mainBoard.whoseTurn = Color.BLACK;
             } else {
-                ep.color = Color.WHITE;
-                ret = ep.moveNormallyLegal(row, column);
-                ep.color = Color.BLACK;
+                for (Piece p : this.mainBoard.whiteList) {
+                    if (p instanceof Pawn) {
+                        ((Pawn) p).passant = false;
+                    }
+                }
+                this.mainBoard.whoseTurn = Color.WHITE;
             }
-            if (ret) {
-                return true;
-            }
+
+            // update board, verify that move successful with return true.
+            this.mainBoard.updateBoard();
+            return true;
         }
         return false;
     }
 
-    public Color getOtherColor() {
+    // check if the king will be in check with given row/col, then returns piece back to original row/col
+    public boolean isInCheck(int actualRow, int actualCol) {
+        
+        boolean inCheck = false;
         if (this.color == Color.WHITE) {
-            return Color.BLACK;
+            for (Piece p : this.mainBoard.whiteList) {
+                if (p instanceof King) {
+                    inCheck = ((King) p).inCheck();
+                }
+            }
         }
-        return Color.WHITE;
+        if (this.color == Color.BLACK) {
+            for (Piece p : this.mainBoard.blackList) {
+                if (p instanceof King) {
+                    inCheck = ((King) p).inCheck();
+                }
+            }
+        }
+        this.row = actualRow;
+        this.col = actualCol;
+        return inCheck;
     }
 
-    public boolean hasTeamPiece(int row, int column) {
-        if (!this.board.hasPiece(row, column)) {
-            return false;
-        }
-        return this.board.findPiece(row, column).getColor() == this.color;
-    }
+    // checks if moving to the spot will put the king into check, adds piece back into suitable list.
+    public boolean isLegalMove(int row, int col) {
+        if (this.isViableMove(row, col)) {
+            // save actual position
+            int actualRow = this.row;
+            int actualCol = this.col;
 
-    public boolean hasEnemyPiece(int row, int column) {
-        if (!this.board.hasPiece(row, column)) {
-            return false;
+            // find piece
+            Piece foundPiece = this.mainBoard.findPiece(row, col);
+            this.row = row;
+            this.col = col;
+
+            // remove the piece from the board and update
+            this.mainBoard.whiteList.remove(foundPiece);
+            this.mainBoard.blackList.remove(foundPiece);
+            this.mainBoard.updateBoard();
+
+            // checks if king is now in check
+            boolean inCheck = isInCheck(actualRow, actualCol);
+
+            // adds piece back
+            if (foundPiece != null) {
+                this.mainBoard.addPieceToList(foundPiece);
+            }
+            this.mainBoard.updateBoard();
+            return !inCheck;
         }
-        return this.board.findPiece(row, column).getColor() != this.color;
+        return false;
     }
 }
