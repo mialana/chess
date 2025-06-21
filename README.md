@@ -4,7 +4,11 @@
 
 **[Demo Video](https://youtu.be/xzkEUZbMlUU)**
 
-## Pre-Build:
+### Overview
+
+A simple chess application with state-saving and move-hints / limitations.
+
+## Prerequisites
 
 Install Maven onto your system.
 
