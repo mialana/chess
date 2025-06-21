@@ -41,7 +41,7 @@ public class RunChess implements Runnable {
         saveButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                mainChess.saveGame("files/savedGame.txt");
+                mainChess.saveGameToFile("files/savedGame.txt");
             }
         });
         loadButton.addMouseListener(new MouseAdapter() {
@@ -116,6 +116,10 @@ public class RunChess implements Runnable {
         instructions.setVisible(true);
     }
 
+    public static Chess getChess() {
+        return mainChess;
+    }
+
     private static void addSwapLabel(JPanel swap_panel, int size, String pathname) {
         try {
             swap_panel.add(
@@ -155,10 +159,6 @@ public class RunChess implements Runnable {
 
         swap_frame.pack();
         swap_frame.setVisible(true);
-    }
-
-    public static Chess getChess() {
-        return mainChess;
     }
 }
 
@@ -213,20 +213,20 @@ class PawnSwapListener extends MouseAdapter {
     @Override
     public void mouseClicked(MouseEvent e) {
         System.out.println("chose piece to swap");
-        swappedPawn.mainBoard.whiteList.remove(swappedPawn);
-        swappedPawn.mainBoard.blackList.remove(swappedPawn);
+        swappedPawn.pieceBoard.whiteList.remove(swappedPawn);
+        swappedPawn.pieceBoard.blackList.remove(swappedPawn);
         if ((e.getX() / Chess.cellSize) == 0) {
-            swappedPawn.mainBoard.addPieceToList(new Queen(swappedPawn.row, swappedPawn.col,
-                    swappedPawn.color, swappedPawn.mainBoard));
+            swappedPawn.pieceBoard.addPieceToList(new Queen(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.pieceBoard));
         } else if (e.getX() / Chess.cellSize == 1) {
-            swappedPawn.mainBoard.addPieceToList(new Knight(swappedPawn.row, swappedPawn.col,
-                    swappedPawn.color, swappedPawn.mainBoard));
+            swappedPawn.pieceBoard.addPieceToList(new Knight(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.pieceBoard));
         } else if (e.getX() / Chess.cellSize == 2) {
-            swappedPawn.mainBoard.addPieceToList(new Bishop(swappedPawn.row, swappedPawn.col,
-                    swappedPawn.color, swappedPawn.mainBoard));
+            swappedPawn.pieceBoard.addPieceToList(new Bishop(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, swappedPawn.pieceBoard));
         } else {
-            swappedPawn.mainBoard.addPieceToList(new Rook(swappedPawn.row, swappedPawn.col,
-                    swappedPawn.color, false, swappedPawn.mainBoard));
+            swappedPawn.pieceBoard.addPieceToList(new Rook(swappedPawn.row, swappedPawn.col,
+                    swappedPawn.color, false, swappedPawn.pieceBoard));
         }
         mainChess.repaint();
         frame.setVisible(false);

@@ -8,23 +8,23 @@ import java.io.IOException;
 
 public class Knight extends Piece {
 
-    public Knight(int row, int col, Color color, ChessBoard mainBoard) {
-        super(row, col, color, mainBoard);
+    public Knight(int row, int col, Color color, ChessBoard pieceBoard) {
+        super(row, col, color, pieceBoard);
     }
 
     @Override
     public void draw(Graphics2D g2D, int size) {
-        BufferedImage bimg = null;
+        BufferedImage bImg = null;
         try {
             if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/knight_white.png"));
+                bImg = ImageIO.read(new File("files/knight_white.png"));
             } else {
-                bimg = ImageIO.read(new File("files/knight_black.png"));
+                bImg = ImageIO.read(new File("files/knight_black.png"));
             }
-            Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2D.drawImage(img, size * col, size * row, null);
+            Image readyImg = bImg.getScaledInstance(size, size, Image.SCALE_FAST);
+            g2D.drawImage(readyImg, size * col, size * row, null);
         } catch (IOException e) {
-            System.out.println("Image does not exist");
+            System.out.println("Error finding image of piece.");
         }
     }
 
@@ -33,9 +33,7 @@ public class Knight extends Piece {
         if (this.hasTeammate(row, col)) {
             return false;
         }
-        if (Math.abs((this.row - row) * (this.col - col)) == 2) {
-            return true;
-        }
-        return false;
+        // accounts for diagonal movement of knight
+        return Math.abs((this.row - row) * (this.col - col)) == 2;
     }
 }

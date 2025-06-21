@@ -8,15 +8,8 @@ import java.io.IOException;
 
 public class Queen extends Piece {
 
-    public Queen(int row, int col, Color color, ChessBoard mainBoard) {
-        super(row, col, color, mainBoard);
-    }
-
-    @Override
-    public boolean isViableMove(int row, int col) {
-        Bishop b = new Bishop(this.row, this.col, this.color, this.mainBoard);
-        Rook r = new Rook(this.row, this.col, this.color, false, this.mainBoard);
-        return b.isViableMove(row, col) || r.isViableMove(row, col);
+    public Queen(int row, int col, Color color, ChessBoard pieceBoard) {
+        super(row, col, color, pieceBoard);
     }
 
     @Override
@@ -28,10 +21,20 @@ public class Queen extends Piece {
             } else {
                 bimg = ImageIO.read(new File("files/queen_black.png"));
             }
-            Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2D.drawImage(img, size * col, size * row, null);
+            Image readyImg = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
+            g2D.drawImage(readyImg, size * col, size * row, null);
         } catch (IOException e) {
-            System.out.println("Image does not exist");
+            System.out.println("Error finding image of piece.");
         }
+    }
+
+    // since a queen can essentially do anything a bishop or rook can do, we can take advantage.
+    // make sure that there are no castling issues by setting firstMove to false
+    @Override
+    public boolean isViableMove(int row, int col) {
+        Rook testRook = new Rook(this.row, this.col, this.color, false, this.pieceBoard);
+        Bishop testBishop = new Bishop(this.row, this.col, this.color, this.pieceBoard);
+
+        return testBishop.isViableMove(row, col) || testRook.isViableMove(row, col);
     }
 }

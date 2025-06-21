@@ -1,9 +1,7 @@
 =:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
 CIS 120 Game Project README
-PennKey: _______
+PennKey: liuamy05
 =:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=
-
-// change piece instance variables to col, owner, and isPassant/passantViable
 
 ===================
 =: Core Concepts :=
@@ -13,13 +11,29 @@ PennKey: _______
   is an appropriate use of the concept. Incorporate the feedback you got after
   submitting your proposal.
 
-  1.
+  1. The first feature I implemented was a 2d array. I used this feature appropriately because
+  I used it to store the state of my game board. Since a 2d array can naturally be thought of
+  in terms of rows and columns, it made a lot of sense to store my Piece objects in one. Notably,
+  this simplified the drawing process because I just had to iterate through the rows and columns
+  (making sure that the gui context was oriented correct). Plus, since each of my Pieces stored
+  their own row and col, it was very natural to just look up the desired position when need be.
 
-  2.
+  2. The second feature I implemented was the File I/O feature. I implemented this feature correctly
+  because I first used Readers to get data from a file and create a new game/load a game based off it.
+  I also used Writers to write the current state of a game to a file in preparation to be read later.
+  I made sure to catch exceptions appropriately and use methods like .write(), .newline(), .close()
+  correctly.
 
-  3.
+  3. The third feature I implemented was the inheritance/subtyping feature. Since some of the pieces
+  (notably pawn, rook, king) had unique features that were "activated" during castling, en passant,
+  and pawn swap, it made sense to use an abstract class whose methods could be overriden. I also
+  used dynamic dispatch extensively since the execution of a method depended on the specific class
+  of the piece.
 
-  4.
+  4. The last feature I implemented was complex game logic. Chess is inherently a complex game.
+  There are situations such as en passant, pawn swap, check, checkmate, and castling that I had
+  to implement. Additionally, each type of piece has a different way to move that I had to
+  implement correctly.
 
 =========================
 =: Your Implementation :=
@@ -28,14 +42,36 @@ PennKey: _______
 - Provide an overview of each of the classes in your code, and what their
   function is in the overall game.
 
+RunChess: this class mostly handles the main GUI drawing of the program. It drew
+the board, buttons, whoseTurn to a JPanel. It was also in charge of all the
+mouse click listening that was happening in the game.
+Chess: this class handles the drawing of the board, drawing of the pieces, drawing of
+colors to signify game state, drawing of the game conclusion, and save game functionality.
+ChessBoard: this class holds the 2d array, whose turn it is, and the lists of all the
+pieces on both sides.
+Piece: this class is the framework of all the Piece classes, and implements the "normal"
+behavior of pieces such as Knight, Bishop, and Queen.
+All piece classes: Holds properties that are specific to themselves, such as how to be drawn,
+how to move, what are viable moves, etc.
 
 - Were there any significant stumbling blocks while you were implementing your
   game (related to your design, or otherwise)?
 
+I think I had a lot of trouble first getting used to how to use the Java Swing library. There
+was a lot of reading I had to do to fully understand how mouse click listeners, JComponents, etc.
+worked. Furthermore, I think I was a bit inefficient with traversing elements and making new
+methods, as at points I got a bit confused by my own code. I tried to solve this by making a lot
+of comments as I went.
 
 - Evaluate your design. Is there a good separation of functionality? How well is
   private state encapsulated? What would you refactor, if given the chance?
 
+In the future, I would have looked to make my private state a lot better encapsulated. Some of
+my classes don't have private instance variables, and I know that that is a sign of bad design.
+Furthermore, I realized in the middle of implementing that it wasn't necessary for each piece
+to contain a copy of the board. If I had more time, I also definitely would have wanted to implement
+click and drag, as that would improve UX greatly. However, I do think I did an okay job of covering
+all edge cases and making sure that all functionalities were correctly implemented.
 
 
 ========================
@@ -44,3 +80,6 @@ PennKey: _______
 
 - Cite any external resources (images, tutorials, etc.) that you may have used 
   while implementing your game.
+
+I did a lot of research on standard Java libraries to implement my design. This is how I
+found how to use methods such as .findClass(), Class.forName(), etc.

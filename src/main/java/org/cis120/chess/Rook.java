@@ -8,11 +8,30 @@ import java.io.IOException;
 
 public class Rook extends Piece {
 
-    public Rook(int row, int col, Color color, boolean firstMove, ChessBoard mainBoard) {
-        super(row, col, color, mainBoard);
+    public Rook(int row, int col, Color color, boolean firstMove, ChessBoard pieceBoard) {
+        super(row, col, color, pieceBoard);
         this.firstMove = firstMove;
     }
 
+
+    @Override
+    public void draw(Graphics2D g2D, int size) {
+        BufferedImage bImg = null;
+        try {
+            if (this.color == Color.WHITE) {
+                bImg = ImageIO.read(new File("files/rook_white.png"));
+            } else {
+                bImg = ImageIO.read(new File("files/rook_black.png"));
+            }
+            Image readyImg = bImg.getScaledInstance(size, size, Image.SCALE_FAST);
+            g2D.drawImage(readyImg, size * col, size * row, null);
+        } catch (IOException e) {
+            System.out.println("Error finding image of piece.");
+        }
+    }
+
+    // rook cares about whether first move due to castling
+    // only small change needed
     @Override
     public boolean movePiece(int row, int col) {
         boolean moved = super.movePiece(row, col);
@@ -23,38 +42,27 @@ public class Rook extends Piece {
     }
 
     @Override
-    public void draw(Graphics2D g2D, int size) {
-        BufferedImage bimg = null;
-        try {
-            if (this.color == Color.WHITE) {
-                bimg = ImageIO.read(new File("files/rook_white.png"));
-            } else {
-                bimg = ImageIO.read(new File("files/rook_black.png"));
-            }
-            Image img = bimg.getScaledInstance(size, size, Image.SCALE_FAST);
-            g2D.drawImage(img, size * col, size * row, null);
-        } catch (IOException e) {
-            System.out.println("Image does not exist");
-        }
-    }
-
-    @Override
     public boolean isViableMove(int row, int col) {
+        // if same place, return false
         if (this.row == row && this.col == col) {
             return false;
         }
+        // if same row
         if (this.row == row) {
             for (int i = Math.min(this.col, col) + 1; i < Math
                     .max(this.col, col); i++) {
-                if (this.mainBoard.isOccupied(row, i)) {
+                // if wants to go through pieces
+                if (this.pieceBoard.isOccupied(row, i)) {
                     return false;
                 }
             }
+            // if there is a teammate there, return false
             return !this.hasTeammate(row, col);
         }
+        // same thing as above except with columns
         if (this.col == col) {
             for (int i = Math.min(this.row, row) + 1; i < Math.max(this.row, row); i++) {
-                if (this.mainBoard.isOccupied(i, col)) {
+                if (this.pieceBoard.isOccupied(i, col)) {
                     return false;
                 }
             }

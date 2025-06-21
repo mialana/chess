@@ -46,10 +46,10 @@ public class Chess extends JPanel {
             List<String> wordsList = wordIter.next();
             try {
                 if (wordsList.size() == 5) {
-                    // finds constructor for class listed in col one of line (either pawn or rook)
+                    // finds constructor for class listed in col one of line (either pawn, rook, or king)
                     // and makes new instance of that class.
                     // second column row, third column col, fourth column owner,
-                    // fifth col passant/firstMove
+                    // fifth col firstMove
                     // adds created instance to desired list
                     cb.addPieceToList(
                             (Piece) Class.forName(wordsList.get(0)).getConstructor(
@@ -61,7 +61,7 @@ public class Chess extends JPanel {
                             )
                     );
                 } else {
-                    // same logic except non-pawn and non-rook
+                    // same logic except non-pawn, non-king, and non-rook
                     cb.addPieceToList(
                             (Piece) Class.forName(wordsList.get(0)).getConstructor(
                                     int.class, int.class, Color.class, ChessBoard.class
@@ -86,34 +86,53 @@ public class Chess extends JPanel {
         this.clicked = clicked;
     }
 
-    public void saveGame(String filePath) {
-        File file = Paths.get(filePath).toFile();
+    // helper method
+    private List<List<Piece>> makePieceListList() {
+        List<List<Piece>> pieceListList = new LinkedList<List<Piece>>();
+        pieceListList.add(mainCb.blackList);
+        pieceListList.add(mainCb.whiteList);
+        return pieceListList;
+    }
+
+    public void saveGameToFile(String filePath) {
+        // finds file that should be saved to
+        File foundFile = Paths.get(filePath).toFile();
         BufferedWriter bw;
         try {
-            bw = new BufferedWriter(new FileWriter(file, false));
+            bw = new BufferedWriter(new FileWriter(foundFile, false));
+            // first line should be whose turn it currently it
             if (mainCb.whoseTurn == Color.WHITE) {
                 bw.write("WHITE");
             }
             if (mainCb.whoseTurn == Color.BLACK) {
                 bw.write("BLACK");
             }
-            for (Piece p : mainCb.whiteList) {
-                bw.newLine();
-                bw.write(p.getClass().getName() + "," + p.row + "," + p.col + "," + "WHITE");
-                if (p instanceof Pawn || p instanceof King || p instanceof Rook) {
-                    bw.write("," + p.firstMove);
-                }
-            }
-            for (Piece p : mainCb.blackList) {
-                bw.newLine();
-                bw.write(p.getClass().getName() + "," + p.row + "," + p.col + "," + "BLACK");
-                if (p instanceof Pawn || p instanceof King || p instanceof Rook) {
-                    bw.write("," + p.firstMove);
+
+            List<List<Piece>> pieceListList = makePieceListList();
+            // every other line follows this format:
+            // {class of piece},{row of piece},{col of piece},{owner of piece}
+            // - there will be a line for each
+
+            for (List<Piece> pl : pieceListList) {
+                for (Piece p : pl) {
+                    String colorString;
+                    if (p.color == Color.WHITE) {
+                        colorString = "WHITE";
+                    } else {
+                        colorString = "BLACK";
+                    }
+                    bw.newLine();
+                    bw.write(p.getClass().getName() + "," + p.row + "," + p.col + "," + colorString);
+
+                    // since pawn, king, and rook rely on firstMove
+                    if (p instanceof Pawn || p instanceof King || p instanceof Rook) {
+                        bw.write("," + p.firstMove);
+                    }
                 }
             }
             bw.close();
         } catch (IOException e1) {
-            System.out.println("IOException in writeStringsToFile");
+            System.out.println("IOException in saveGameToFile");
         }
     }
 
@@ -132,13 +151,6 @@ public class Chess extends JPanel {
                 g2D.fill(cell);
             }
         }
-    }
-
-    private List<List<Piece>> makePieceListList() {
-        List<List<Piece>> pieceListList = new LinkedList<List<Piece>>();
-        pieceListList.add(mainCb.blackList);
-        pieceListList.add(mainCb.whiteList);
-        return pieceListList;
     }
 
     // calls the draw method for each individual piece
@@ -196,10 +208,17 @@ public class Chess extends JPanel {
             for (Piece p : pl) {
                 if (p instanceof King) {
                     if (((King) p).isGameOver()) {
-                        g2D.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD | Font.ITALIC, cellSize / 2));
-                        g2D.setColor(new Color(119, 140, 201));
+                        g2D.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, cellSize / 2));
+                        g2D.setColor(new Color(71, 94, 159));
                         if (((King) p).inCheck()) {
+                            String winner;
+                            if (p.color == Color.WHITE) {
+                                winner = "BLACK";
+                            } else {
+                                winner = "WHITE";
+                            }
                             g2D.drawString("CHECKMATE!", ((5 * cellSize) / 2), 4 * cellSize);
+                            g2D.drawString(winner + " WINS!", ((5 * cellSize) / 2), 5 * cellSize);
                         } else {
                             g2D.drawString("STALEMATE!", (5 / 2) * cellSize, 4 * cellSize);
                         }
